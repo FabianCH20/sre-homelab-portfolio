@@ -1,5 +1,5 @@
 # Bitácora de Incidentes — SRE Homelab
-
+🇬🇧 [Read in English](incidents-sre-eng.md)
 > Errores reales encontrados practicando el [playbook principal](./playbook-sre-ubuntu-server.md), documentados en formato síntoma → causa raíz → diagnóstico → fix → lección. En SRE esto se llama **runbook de incidentes**: el objetivo es no repetir la misma investigación dos veces, y demostrar troubleshooting real, no solo copiar comandos de un tutorial. Cada incidente incluye referencias a documentación oficial y del repositorio GitHub de la herramienta involucrada, para profundizar más allá del fix puntual.
 
 ---

@@ -1,5 +1,5 @@
 # Incident Log — SRE Homelab
-
+🇪🇸 [Leer en español](incidentes-sre.md)
 > Real errors found while practicing the [main playbook](./playbook-sre-ubuntu-server.md), documented in symptom → root cause → diagnosis → fix → lesson format. In SRE this is called an **incident runbook**: the goal is to never repeat the same investigation twice, and to demonstrate real troubleshooting, not just copying commands from a tutorial. Each incident includes references to official documentation and the GitHub repository of the tool involved, to dig deeper beyond the immediate fix.
 
 ---
