@@ -1656,6 +1656,65 @@ nano alert.rules.yml
 docker compose -f docker-compose.monitoring.yml up -d
 ```
 
+## PHASE 8 — Automation: One-Command Startup Script
+
+After several phases, restarting the whole homelab means remembering separate commands for Docker, k3s, and each Compose stack. This script consolidates all of them into one.
+
+**Create the script:**
+```bash
+nano /opt/scripts/start-lab.sh
+```
+
+```bash
+#!/usr/bin/env bash
+# start-lab.sh — Brings up the whole SRE homelab with one command
+set -uo pipefail
+
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
+log()  { echo -e "${GREEN}[OK]${NC} $1"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+err()  { echo -e "${RED}[FAIL]${NC} $1"; }
+
+export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"
+
+echo "=== Starting SRE homelab ==="
+for svc in docker k3s node_exporter; do
+  systemctl is-active --quiet "$svc" && log "$svc active" || { warn "$svc inactive, starting..."; sudo systemctl start "$svc" 2>/dev/null && log "$svc started" || err "$svc failed to start"; }
+done
+
+MONITORING_DIR="/opt/monitoring"
+[ -f "$MONITORING_DIR/docker-compose.monitoring.yml" ] && (cd "$MONITORING_DIR" && docker compose -f docker-compose.monitoring.yml up -d && log "Monitoring stack up") || warn "Monitoring skipped"
+
+for dir in /opt/apps/compose-lab /opt/apps/db-stack; do
+  { [ -f "$dir/compose.yaml" ] || [ -f "$dir/docker-compose.yml" ]; } && (cd "$dir" && docker compose up -d && log "Project up: $dir")
+done
+
+if command -v kubectl &> /dev/null && [ -f "/opt/k8s/deployment.yaml" ]; then
+  kubectl apply -f /opt/k8s/deployment.yaml && log "k8s manifest applied" || err "k8s apply failed"
+fi
+
+echo "=== Summary ==="
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+command -v kubectl &> /dev/null && kubectl get pods
+IP=$(hostname -I | awk '{print $1}')
+echo "Prometheus: http://${IP}:9090 | Grafana: http://${IP}:3000"
+```
+→ `export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"` makes sure the script finds the kubeconfig even when it runs outside your normal interactive session.
+
+**Grant execute permission and validate syntax before running:**
+```bash
+chmod +x /opt/scripts/start-lab.sh
+bash -n /opt/scripts/start-lab.sh
+```
+
+**Run it:**
+```bash
+/opt/scripts/start-lab.sh
+```
+
+**Fix if the Kubernetes section fails with error HTML instead of a real error**: see Incident #22 in [incidents-sre-eng.md](./incidents-sre-eng.md) — it almost always means `~/.kube/config` doesn't exist; create it with `mkdir -p ~/.kube && sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config && sudo chown $(id -u):$(id -g) ~/.kube/config`.
+
+
 ---
 
 ## Final Validation Checklist

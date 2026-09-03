@@ -511,6 +511,29 @@
 - **Lesson**: adding a single line to a YAML file that already worked is a common failure point — the new content can visually misalign the rest of the block without it being obvious at a glance in the editor. Validating with `docker compose config` (or the tool's equivalent) after **any** edit to an existing YAML, not just when creating it, avoids repeating the trial-and-error cycle on `up -d`.
 - **References**: Official — [YAML Specification 1.2](https://yaml.org/spec/1.2.2/) · GitHub — [docker/compose](https://github.com/docker/compose)
 
+
+---
+
+**Incident #22 — `kubectl apply` returns WordPress's error HTML instead of a Kubernetes API response**
+
+- **Symptom**: running `kubectl apply -f /opt/k8s/deployment.yaml` from a script (`start-lab.sh`), `kubectl` returned a validation error containing HTML with `<title>Database Error</title>` — WordPress's error page — instead of a real Kubernetes error.
+- **Root cause**: `~/.kube/config` didn't exist at that path (never copied after a reinstall, or created under a different user session). Without a kubeconfig, `kubectl` fell back to `localhost:8080` — which happened to be the exact port the WordPress container (`compose-lab-wordpress-1`) was published on, so `kubectl` ended up "talking" to WordPress instead of the real k3s API (which runs on port 6443).
+- **Diagnosis**:
+````bash
+  grep server ~/.kube/config        # "No such file or directory"
+  ls -la ~/.kube/
+  sudo k3s kubectl get nodes        # isolates whether it's the service or the kubeconfig
+````
+- **Fix applied**:
+````bash
+  mkdir -p ~/.kube
+  sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+  sudo chown $(id -u):$(id -g) ~/.kube/config
+  kubectl get nodes   # confirmed "Ready"
+````
+- **Lesson**: when a command-line tool (`kubectl`) returns content that clearly doesn't belong to it (HTML from another app), it's a sign it's connecting to the wrong endpoint, not a bug in the manifest or the command itself — check where it's pointing first (kubeconfig, env vars, default port), not the content being applied. This also confirms why `start-lab.sh` shouldn't use `&> /dev/null` on critical steps: hiding the real error would have made this diagnosis much slower.
+- **References**: Official — [Kubernetes Docs: Organizing Cluster Access Using kubeconfig Files](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) · GitHub — [k3s-io/k3s](https://github.com/k3s-io/k3s)
+
 ---
 
 ## Cross-Cutting Patterns (for your README)

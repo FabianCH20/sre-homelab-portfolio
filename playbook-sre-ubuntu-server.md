@@ -1649,6 +1649,65 @@ nano alert.rules.yml
 docker compose -f docker-compose.monitoring.yml up -d
 ```
 
+## FASE 8 — Automatización: script de arranque único
+
+Después de varias fases, reiniciar todo el homelab significa recordar comandos distintos para Docker, k3s, y cada stack de Compose por separado. Este script los consolida en uno solo.
+
+**Crea el script:**
+````bash
+nano /opt/scripts/start-lab.sh
+````
+
+````bash
+#!/usr/bin/env bash
+# start-lab.sh — Levanta todo el homelab SRE con un solo comando
+set -uo pipefail
+
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
+log()  { echo -e "${GREEN}[OK]${NC} $1"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+err()  { echo -e "${RED}[FAIL]${NC} $1"; }
+
+export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"
+
+echo "=== Levantando homelab SRE ==="
+for svc in docker k3s node_exporter; do
+  systemctl is-active --quiet "$svc" && log "$svc activo" || { warn "$svc inactivo, iniciando..."; sudo systemctl start "$svc" 2>/dev/null && log "$svc iniciado" || err "$svc no pudo iniciar"; }
+done
+
+MONITORING_DIR="/opt/monitoring"
+[ -f "$MONITORING_DIR/docker-compose.monitoring.yml" ] && (cd "$MONITORING_DIR" && docker compose -f docker-compose.monitoring.yml up -d && log "Monitoreo levantado") || warn "Monitoreo omitido"
+
+for dir in /opt/apps/compose-lab /opt/apps/db-stack; do
+  { [ -f "$dir/compose.yaml" ] || [ -f "$dir/docker-compose.yml" ]; } && (cd "$dir" && docker compose up -d && log "Proyecto levantado: $dir")
+done
+
+if command -v kubectl &> /dev/null && [ -f "/opt/k8s/deployment.yaml" ]; then
+  kubectl apply -f /opt/k8s/deployment.yaml && log "Manifiesto k8s aplicado" || err "Falló apply de k8s"
+fi
+
+echo "=== Resumen ==="
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+command -v kubectl &> /dev/null && kubectl get pods
+IP=$(hostname -I | awk '{print $1}')
+echo "Prometheus: http://${IP}:9090 | Grafana: http://${IP}:3000"
+````
+→ `export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"` asegura que el script encuentre el kubeconfig aunque corra fuera de tu sesión interactiva normal.
+
+**Dale permisos y valida sintaxis antes de ejecutar:**
+````bash
+chmod +x /opt/scripts/start-lab.sh
+bash -n /opt/scripts/start-lab.sh
+````
+
+**Ejecuta:**
+````bash
+/opt/scripts/start-lab.sh
+````
+
+**Fix si la sección de Kubernetes falla con HTML de error en vez de un error real**: ver el Incidente #22 en [incidentes-sre.md](./incidentes-sre.md) — casi siempre significa que `~/.kube/config` no existe; créalo con `mkdir -p ~/.kube && sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config && sudo chown $(id -u):$(id -g) ~/.kube/config`.
+
+
 ---
 
 ## Checklist final de validación

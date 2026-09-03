@@ -511,6 +511,30 @@
 - **Lección**: agregar una sola línea a un archivo YAML que ya funcionaba es un punto de fallo común — el nuevo contenido puede desalinear visualmente el resto del bloque sin que sea obvio a simple vista en el editor. Validar con `docker compose config` (o el equivalente de la herramienta) después de **cualquier** edición a un YAML existente, no solo al crearlo por primera vez, evita repetir el ciclo de prueba-error en `up -d`.
 - **Referencias**: Oficial — [YAML Specification 1.2](https://yaml.org/spec/1.2.2/) · GitHub — [docker/compose](https://github.com/docker/compose)
 
+
+---
+
+**Incidente #22 — `kubectl apply` devuelve HTML de error de WordPress en vez de respuesta de la API de Kubernetes**
+
+- **Síntoma**: al correr `kubectl apply -f /opt/k8s/deployment.yaml` desde un script (`start-lab.sh`), `kubectl` devolvió un error de validación conteniendo HTML con `<title>Database Error</title>` — la página de error de WordPress — en vez de un error real de Kubernetes.
+- **Causa raíz**: `~/.kube/config` no existía en esa ruta (nunca se copió tras una reinstalación o se creó en otra sesión de usuario distinta). Sin kubeconfig, `kubectl` cayó en un comportamiento de fallback apuntando a `localhost:8080` — que coincidentemente era el mismo puerto donde el contenedor de WordPress (`compose-lab-wordpress-1`) estaba publicado, así que `kubectl` terminó "hablando" con WordPress en vez de con la API real de k3s (que corre en el puerto 6443).
+- **Diagnóstico**:
+````bash
+  grep server ~/.kube/config        # "No such file or directory"
+  ls -la ~/.kube/
+  sudo k3s kubectl get nodes        # aísla si el problema es el servicio o el kubeconfig
+````
+- **Fix aplicado**:
+````bash
+  mkdir -p ~/.kube
+  sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+  sudo chown $(id -u):$(id -g) ~/.kube/config
+  kubectl get nodes   # confirmó "Ready"
+````
+- **Lección**: cuando una herramienta de línea de comandos (`kubectl`) devuelve contenido que claramente no le pertenece (HTML de otra aplicación), es señal de que está conectando al endpoint equivocado, no de un bug en el manifiesto ni en el comando en sí — revisar primero a dónde apunta (kubeconfig, variables de entorno, puerto por defecto), no el contenido de lo que se está aplicando. Esto también confirma por qué `start-lab.sh` no debe usar `&> /dev/null` en pasos críticos: ocultar el error real hubiera hecho este diagnóstico mucho más lento.
+- **Referencias**: Oficial — [Kubernetes Docs: Organizing Cluster Access Using kubeconfig Files](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) · GitHub — [k3s-io/k3s](https://github.com/k3s-io/k3s)
+
+
 ---
 
 ## Patrones transversales (para tu README)
