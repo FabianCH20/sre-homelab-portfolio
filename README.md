@@ -61,6 +61,11 @@ cd sre-homelab-portfolio
 ansible-playbook -i ansible/inventory.ini ansible/playbook.yml --check
 ```
 
+
 ## Documented incidents
-See [incidentes-sre.md](incidentes-sre.md) — a real log of errors
+See [incidents-sre-eng.md](incidents-sre-eng.md) — a real log of errors
 found and resolved during implementation.
+
+## Full playbook
+See [playbook-sre-ubuntu-server-eng.md](playbook-sre-ubuntu-server-eng.md)
+for the complete step-by-step guide (Spanish version also available).

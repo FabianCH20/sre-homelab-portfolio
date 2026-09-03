@@ -1,5 +1,5 @@
 # Playbook SRE: Servidor Ubuntu desde Cero
-
+🇬🇧 [Read in English](playbook-sre-ubuntu-server-eng.md)
 > Formato: `comando → qué hace → por qué / síntoma que resuelve`
 > Nivel: Junior SRE. Ejecutar en orden. Cada fase asume la anterior completa.
 
