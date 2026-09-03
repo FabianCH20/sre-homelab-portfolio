@@ -1,0 +1,20 @@
+# alert.rules.yml
+groups:
+  - name: node-alerts
+    rules:
+      - alert: DiscoLleno
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 15
+        for: 5m
+        labels: {severity: critical}
+        annotations: {summary: "Disco con menos de 15% libre en {{ $labels.instance }}"}
+
+      - alert: CPUAlta
+        expr: 100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 10m
+        labels: {severity: warning}
+
+      - alert: PruebaSiempreActiva
+        expr: up == 1
+        for: 10s
+        labels: {severity: info}
+        annotations: {summary: "Alerta de prueba — se dispara siempre que el target esté UP"}
