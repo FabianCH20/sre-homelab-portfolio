@@ -1396,16 +1396,16 @@ http://<SERVER_IP>:9090
 ```
 → Replace `<SERVER_IP>` with your server's real IP (`hostname -I` if you don't have it handy). Should load the Prometheus web interface.
 
-**Example with a real IP** (assuming `hostname -I` returned `192.168.100.42` — typical in VirtualBox Bridged Adapter mode, already visible directly from your local network):
+**Example with a real IP** (assuming `hostname -I` returned `192.168.x.x` — typical in VirtualBox Bridged Adapter mode, already visible directly from your local network):
 ```
-http://192.168.100.42:9090
+http://192.168.x.x:9090
 ```
 
 **Confirm Prometheus is collecting metrics from your targets:**
 ```
 http://<SERVER_IP>:9090/targets
 ```
-→ Example: `http://192.168.100.42:9090/targets`. This page lists each `job` defined in `prometheus.yml` (`node`, `kubernetes`) with its status: **`UP`** in green means Prometheus is successfully scraping that metric; **`DOWN`** in red means it can't reach that target — check the IP/port in `prometheus.yml` and that `node_exporter` is running there (section 7.1).
+→ Example: `http://192.168.x.x:9090/targets`. This page lists each `job` defined in `prometheus.yml` (`node`, `kubernetes`) with its status: **`UP`** in green means Prometheus is successfully scraping that metric; **`DOWN`** in red means it can't reach that target — check the IP/port in `prometheus.yml` and that `node_exporter` is running there (section 7.1).
 
 **Try a simple query**, directly in the Prometheus UI search bar ("Graph" tab):
 ```
@@ -1419,7 +1419,7 @@ Open in your browser:
 ```
 http://<SERVER_IP>:3000
 ```
-→ Example: `http://192.168.100.42:3000`. Grafana login screen. Default credentials on first access:
+→ Example: `http://192.168.x.x:3000`. Grafana login screen. Default credentials on first access:
 - User: `admin`
 - Password: `admin`
 

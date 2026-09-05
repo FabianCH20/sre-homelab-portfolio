@@ -1,0 +1,33 @@
+# playbook.yml
+- hosts: web
+  become: true
+  tasks:
+    - name: Actualizar paquetes
+      apt: {update_cache: yes, upgrade: dist}
+
+    - name: Instalar Docker
+      apt: {name: docker.io, state: present}
+
+    - name: Asegurar que Docker esté activo
+      systemd: {name: docker, state: started, enabled: true}
+
+    - name: Crear directorio de la app
+      file:
+        path: /opt/app
+        state: directory
+        mode: "0755"
+
+    - name: Copiar configuración de la app
+      template:
+        src: app.env.j2
+        dest: /opt/app/.env
+        mode: "0600"
+      notify: reiniciar app
+
+  handlers:
+    - name: reiniciar app
+      docker_container:
+        name: miapp
+        image: nginx:latest
+        state: started
+        restart: true

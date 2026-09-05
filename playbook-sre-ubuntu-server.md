@@ -1389,16 +1389,16 @@ http://<IP_SERVIDOR>:9090
 ```
 → Reemplaza `<IP_SERVIDOR>` por la IP real de tu servidor (`hostname -I` si no la tienes a mano). Debe cargar la interfaz web de Prometheus.
 
-**Ejemplo con una IP real** (asumiendo `hostname -I` devolvió `192.168.100.42` — típico en modo Adaptador Puente de VirtualBox, ya visible directo desde tu red local):
+**Ejemplo con una IP real** (asumiendo `hostname -I` devolvió `192.168.x.x` — típico en modo Adaptador Puente de VirtualBox, ya visible directo desde tu red local):
 ```
-http://192.168.100.42:9090
+http://192.168.x.x:9090
 ```
 
 **Confirma que Prometheus está recolectando métricas de tus targets:**
 ```
 http://<IP_SERVIDOR>:9090/targets
 ```
-→ Ejemplo: `http://192.168.100.42:9090/targets`. Esta página lista cada `job` definido en `prometheus.yml` (`node`, `kubernetes`) con su estado: **`UP`** en verde significa que Prometheus está scrapeando esa métrica exitosamente; **`DOWN`** en rojo significa que no puede alcanzar ese target — revisa la IP/puerto en `prometheus.yml` y que `node_exporter` esté corriendo ahí (sección 7.1).
+→ Ejemplo: `http://192.168.x.x:9090/targets`. Esta página lista cada `job` definido en `prometheus.yml` (`node`, `kubernetes`) con su estado: **`UP`** en verde significa que Prometheus está scrapeando esa métrica exitosamente; **`DOWN`** en rojo significa que no puede alcanzar ese target — revisa la IP/puerto en `prometheus.yml` y que `node_exporter` esté corriendo ahí (sección 7.1).
 
 **Prueba una consulta simple**, directo en la barra de búsqueda de la UI de Prometheus (pestaña "Graph"):
 ```
@@ -1412,7 +1412,7 @@ Abre en tu navegador:
 ```
 http://<IP_SERVIDOR>:3000
 ```
-→ Ejemplo: `http://192.168.100.42:3000`. Pantalla de login de Grafana. Credenciales por defecto en el primer acceso:
+→ Ejemplo: `http://192.168.x.x:3000`. Pantalla de login de Grafana. Credenciales por defecto en el primer acceso:
 - Usuario: `admin`
 - Contraseña: `admin`
 
